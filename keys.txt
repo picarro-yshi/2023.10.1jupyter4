@@ -1,0 +1,13 @@
+
+*** Combo Log
+
+            a, b, _ = read.get_spectra_row('broadband', row, pull_results=True) #spectrum (arrays), results (data key), max_row
+
+*** a
+dict_keys(['AmbientPressure', 'CavityPressure', 'CavityTemp', 'DasTemp', 'HDO', 'OutletValve', 'ValveMask', 'cavityPressureMax', 'cavityPressureMean', 'cavityPressureMin', 'cavityPressureStd', 'eCompoundOutputs_280_calibration', 'eCompoundOutputs_297_calibration', 'eCompoundOutputs_9233_calibration', 'eCompoundOutputs_948_calibration', 'eCompoundOutputs_962_calibration', 'epochTime', 'f0', 'f0_shift', 'fitData_baseline_baselineCoeff_0th', 'fitData_baseline_baselineCoeff_1st', 'fitData_fitdata_params_nucenter', 'fitData_nu_transform_n0', 'fitData_nu_transform_n1', 'fitResults_Ba(0)', 'fitResults_Ba(1)', 'fitResults_CpC(9233)', 'fitResults_CpC(948)', 'fitTime', 'freq_error_count', 'freq_error_fraction', 'gasConcs_280', 'gasConcs_297', 'gasConcs_9233', 'gasConcs_947', 'gasConcs_948', 'gasConcs_962', 'gasConcs_977', 'loadTime', 'numGroups', 'numRingdowns', 'partial_fit_integral', 'pztValueMean', 'rmse', 'row_id', 'spectrum_id', 'timestamp', 'totalTime', 'tunerValueMean', 'tunerValueStd'])
+
+
+*** b
+dict_keys(['absorbance', 'model', 'npoints', 'nu', 'partial_fit', 'residuals', 'static_compounds', 'xtalk'])
+
+
