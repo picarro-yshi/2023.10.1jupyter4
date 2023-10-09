@@ -68,6 +68,7 @@ def plot_combo(fnr, gas, combokey = "partial_fit", row=None):
             y = data[0][combokey]
             # model = data[0]['model']
             # print(model)
+            print(len(nu))
     
             fig, ax = plt.subplots()
             ax.plot(nu, y)
@@ -83,11 +84,15 @@ if __name__ == "__main__":
     basepath = '/Volumes/Data/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration'       ##Mac
     # basepath = 'R:\crd_G9000\AVXxx\\3610-NUV1022\R&D\Calibration'               ## Windows
     COMBOKEYS = ['partial_fit', 'absorbance', 'model', 'residuals']
-
-    gas = '9233 - Norbornane'
-    date = '20230908test'
-    row1 = 1200
     combokey = COMBOKEYS[0]
+
+    # gas = '9233 - Norbornane'
+    # date = '20230908test'
+    # row1 = 1200
+
+    gas = '7868 - 2,4,4-trimethyl-1-pentene'
+    date = '20230906d1'
+    row1 = 1999
 
     fnr = os.path.join(basepath, gas, date)
     print(fnr)
@@ -99,9 +104,9 @@ if __name__ == "__main__":
         print('Error, did not find parameters data.')
     else:
         # plot each row of spectrum
-        plot_combo(fnr, gas)            # find row number
+        # plot_combo(fnr, gas)            # find row number animation
         # plot_combo(fnr, gas, combokey)            # find row number
-        # plot_combo(fnr, gas, row=row1)  # row number animation
+        plot_combo(fnr, gas, row=row1)  # row number
 
         # array list, mode number
         # r1 = 1100

@@ -10,25 +10,26 @@ from spectral_logger1 import SpectralLogReader as slog
 import GoldenCalibrationUtilities as GCU
 COMBOTAG = "../2023.10.2ui4/par1/combo_stop.txt"
 
-def remove_single(x1, x2, y2):  # x1<x2, use x1 as the standard
+def alignment(x1, y1, x2, y2):  # x1 != x2
     n1 = len(x1)
-    n2 = len(x2)
-    idx = []
     for i in range(n1):
-        a = str(x1[i])[:7]
-        b = str(x2[i])[:7]
-        if a != b:
-            idx.append(i)
-
-        if len(idx) == n2 - n1:
+        if len(x1) == len(x2):  # x1, x2 same length, do nothing
             break
 
-    x2 = np.delete(x2, idx)
-    y2 = np.delete(y2, idx)
+        a = round(x1[i], 3)
+        b = round(x2[i], 3)
+        if a != b:  # look at the next point
+            c = round(x1[i+1], 1)
+            d = round(x2[i+1], 1)
+            if c < d:  # x1, y1 has the extra point, remove
+                x1.pop(i)
+                y1.pop(i)
+            if c > d:
+                x2.pop(i)
+                y2.pop(i)
 
-    # for i in range(n1):
-    #     print(x1[i], x2[i])
-    return x2, y2
+    return x1, y1, x2, y2
+
 
 def combo_study(fnr, gas, cid, day, r1, r2, r3, r4, peak_percent=10, savefig=False):
     note = ''
@@ -91,6 +92,7 @@ def combo_study(fnr, gas, cid, day, r1, r2, r3, r4, peak_percent=10, savefig=Fal
         ### partial fit of 2 combo log and their difference
         # option1: r1, r2
         if r1:
+            print('use r1, r2')
             idx1 = r1
             idx2 = r2
             peak = yconc[r1]
@@ -101,6 +103,7 @@ def combo_study(fnr, gas, cid, day, r1, r2, r3, r4, peak_percent=10, savefig=Fal
         # option2:peak and peak * percentage
         # find the peak index:
         else:
+            print('use peak percentage')
             peak = max(yconc)
             idx1_y = yconc.index(peak)
             idx1 = idx1_y + r3
@@ -127,25 +130,39 @@ def combo_study(fnr, gas, cid, day, r1, r2, r3, r4, peak_percent=10, savefig=Fal
         nu2 = data[0]['nu']
         ab2 = data[0]['partial_fit']
 
+        nu1 = list(nu1)
+        ab1 = list(ab1)
+        nu2 = list(nu2)
+        ab2 = list(ab2)
+
         n1 = len(nu1)
         n2 = len(nu2)
         print(n1, n2)
+        print(idx1, idx2)
 
-        if n1 < n2:
-            x1, y1 = nu1, ab1
-            x2, y2 = remove_single(nu1, nu2, ab2)
-        elif n2 < n1:
-            x1, y1 = remove_single(nu2, nu1, ab1)
-            x2, y2 = nu2, ab2
-        else:
-            x1, y1 = nu1, ab1
-            x2, y2 = nu2, ab2
+        # print('nu1', idx1)
+        # for i in nu1:
+        #     print(i)
+        #
+        # print('nu2', idx2)
+        # for i in nu2:
+        #     print(i)
+
+        x1, y1, x2, y2 = alignment(nu1, ab1, nu2, ab2)
 
         mm = max(y1)
         y10 = y1/mm
         mm = max(y2)
         y20 = y2/mm
-
+        
+        # print('x1', idx1)
+        # for i in x1:
+        #     print(i)
+        #
+        # print('x2', idx2)
+        # for i in x2:
+        #     print(i)
+            
         ax2.plot(x1, y10, col1, lw=1, label=label1)
         ax2.legend()
         ax2.set_ylabel('Scaled Partial Fit', color=col1, fontsize=12)
@@ -173,8 +190,11 @@ if __name__ == "__main__":
     basepath = '/Volumes/Data/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration'       ##Mac
     # basepath = 'R:\crd_G9000\AVXxx\\3610-NUV1022\R&D\Calibration'               ## Windows
 
+    # gas = '9233 - Norbornane'
+    # date = '20230908test'
     gas = '9233 - Norbornane'
-    date = '20230908test'
+    date = '20230911d1'
+
     peak_percent = 10  # % of peak height
 
     fnr = os.path.join(basepath, gas, date)
@@ -195,10 +215,10 @@ if __name__ == "__main__":
         temp = f.read().splitlines()
         cid = int(temp[0])
 
-        r1 = 100     # compare 2 rows
-        r2 = 200
-        r3 = 0      # 0 for minimum row#
-        r4 = 1000      # 0 for maximum row#
+        r1 = 0     # compare 2 rows
+        r2 = 0
+        r3 = 190      # 0 for minimum row#
+        r4 = 1010      # 0 for maximum row#
         # combo_study(fnr, gas, cid, day, r1, r2, r3, r4)
         combo_study(fnr, gas, cid, day, r1, r2, r3, r4, savefig=True)
 
