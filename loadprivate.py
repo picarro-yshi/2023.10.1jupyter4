@@ -2,11 +2,12 @@
 
 import numpy as np
 import os
-import h5py     #need by Windows
-import tables   #need by windows
+import h5py  # need by Windows
+import tables  # need by windows
 
-def loadprivate(fnr):   # from Chris's datautility3
-    ht = []   #head tags
+
+def loadprivate(fnr, verbose=True):  # from Chris's datautility3
+    ht = []  # head tags
     dat = None
     fd = os.path.join(fnr, 'PrivateData', 'broadband')
     N = len(os.listdir(fd))
@@ -60,10 +61,12 @@ def loadprivate(fnr):   # from Chris's datautility3
         except:
             print('dat array dimension changed in file %s. Try cut the first ten minutes and re-run.' % f)
 
-        print("Loading %d / %d... " % (ct, N))
+        if verbose:
+            print("Loading %d / %d... " % (ct, N))
         ct += 1
 
     return ht, dat
+
 
 if __name__ == "__main__":
     rdrive = '/Volumes/Data/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration'
@@ -74,9 +77,6 @@ if __name__ == "__main__":
     ht, dat = loadprivate(fnr)
     print(ht)  # head tag
     # print(dat)  # head tag
-
-
-
 
 # ## import customized files from other folder
 # helperpath = '../code/Rella-Python/'    ## './' in same folder

@@ -27,7 +27,6 @@ def aqueous_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, pct=4, row=500, showg
         return dat[:, j]
 
     ht, dat = loadprivate(fnr)
-    # print(ht)
 
     x1 = h('time')
     y1 = h(gas_name) * 1e6
