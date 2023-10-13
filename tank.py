@@ -162,11 +162,11 @@ def calibration_gastank(fnr, gas, cid, tank_conc, t1, t2, t3, row=500, showgraph
     ### check if compound has the correct spectrum and RMSE
     read = slog(os.path.join(fnr, 'ComboResults'), verbose=True)
     data, _, max_row = read.get_spectra_row('broadband', row, pull_results=True)
-    nu = data[0]['nu']
-    k = data[0]['absorbance']
-    residuals = data[0]['residuals']
-    partial_fit = data[0]['partial_fit']
-    model = data[0]['model']
+    nu = data['nu']
+    k = data['absorbance']
+    residuals = data['residuals']
+    partial_fit = data['partial_fit']
+    model = data['model']
 
     F, [A1, A2] = plt.subplots(2, 1, dpi=150)   #figsize=(10, 8)
     A1.set_facecolor('#Ededee')
@@ -208,9 +208,14 @@ if __name__ == "__main__":
     basepath = '/Volumes/Data/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration'       ##Mac
     # basepath = 'R:\crd_G9000\AVXxx\\3610-NUV1022\R&D\Calibration'               ## Windows
 
+    # for test
     gas = '702 - Ethanol'
     date = '20230209t3test'
     row1 = 1200
+
+    # gas = '9253 - Cyclopentane'
+    # date = '20231011t1'
+    # row1 = 10
 
     fnr = os.path.join(basepath, gas, date)
     print(fnr)
