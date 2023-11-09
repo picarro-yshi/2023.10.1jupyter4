@@ -231,8 +231,8 @@ if __name__ == "__main__":
     date = '20230908test'
     row1 = 1200
 
-    sample = '15504 - Ethylcyclohexane'
-    date = '20230915d1'
+    sample = '164514 - Methoxyperfluorobutane'
+    date = '20231020d3'
 
     fnr = os.path.join(basepath, sample, date)
     print(fnr)

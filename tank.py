@@ -12,7 +12,7 @@ from spectral_logger1 import SpectralLogReader as slog
 import GoldenCalibrationUtilities as GCU
 from loadprivate import loadprivate
 
-def calibration_gastank(fnr, gas, cid, tank_conc, t1, t2, t3, row=500, showgraph=False, savefig=False):
+def calibration_gastank(fnr, gas, cid, tank_conc, t1, t2, t3, row=300, showgraph=False, savefig=False):
     gas_name = 'broadband_gasConcs_' + str(cid)  ## broadband_gasConcs_176
     cal_name = 'broadband_eCompoundOutputs_'+ str(cid) +'_calibration' ## broadband_eCompoundOutputs_176_calibration
 
@@ -28,7 +28,7 @@ def calibration_gastank(fnr, gas, cid, tank_conc, t1, t2, t3, row=500, showgraph
 
     x1 = h('time')
     y1 = h(gas_name) * 1e6
-
+    # print(x1)
     idx = (x1 > ta+300) & (x1 < ta + 1560)  # zero1, 20 min
     x0 = x1[idx]
     start0 = x0[0]  # zero start epoch
@@ -37,7 +37,9 @@ def calibration_gastank(fnr, gas, cid, tank_conc, t1, t2, t3, row=500, showgraph
     # print(len(x0))
 
     idx = (x1 > tc-1800) & (x1 < tc-300)       # IPA, time during which values are constant
+    # print('tc ', tc, t3)
     x = x1[idx]
+    # print(idx)
     start = x[0]         # IPA start epoch
     x = (x - x[0]) / 60  # min, start at 0
     y = y1[idx]
@@ -209,13 +211,13 @@ if __name__ == "__main__":
     # basepath = 'R:\crd_G9000\AVXxx\\3610-NUV1022\R&D\Calibration'               ## Windows
 
     # for test
-    gas = '702 - Ethanol'
-    date = '20230209t3test'
-    row1 = 1200
+    # gas = '702 - Ethanol'
+    # date = '20230209t3test'
+    # row1 = 1200
 
-    # gas = '9253 - Cyclopentane'
-    # date = '20231011t1'
-    # row1 = 10
+    gas = '6574 - 1,1,2-Trichloroethane'
+    date = '20231026t2'
+    row1 = 30
 
     fnr = os.path.join(basepath, gas, date)
     print(fnr)
