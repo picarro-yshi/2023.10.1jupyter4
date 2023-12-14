@@ -95,8 +95,8 @@ def combo_study(fnr, gas, cid, day, r1, r2, r3, r4, peak_percent=10, savefig=Fal
             print('use r1, r2')
             idx1 = r1
             idx2 = r2
-            peak = yconc[r1]
-            peak2 = yconc[r2]
+            peak = yconc[r1-r3]
+            peak2 = yconc[r2-r3]
             label1 = str(r1)
             label2 = str(r2)
 

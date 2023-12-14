@@ -13,7 +13,7 @@ from loadprivate import loadprivate
 
 ## all parameters must be valid before sending to below functions; no sanity check
 ## need .h5 files in PrvateData/broadband and ComboResults folder
-def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, pct = 4, row=500, showgraph=False, savefig=False):
+def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, pct = 4, row=100, showgraph=False, savefig=False):
     gas_name = 'broadband_gasConcs_' + str(cid)  ## broadband_gasConcs_176
     cal_name = 'broadband_eCompoundOutputs_'+ str(cid) +'_calibration' ## broadband_eCompoundOutputs_176_calibration
 

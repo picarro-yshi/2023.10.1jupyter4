@@ -12,7 +12,7 @@ from spectral_logger1 import SpectralLogReader as slog
 import GoldenCalibrationUtilities as GCU
 from loadprivate import loadprivate
 
-def calibration_gastank(fnr, gas, cid, tank_conc, t1, t2, t3, row=300, showgraph=False, savefig=False):
+def calibration_gastank(fnr, gas, cid, tank_conc, t1, t2, t3, row=100, showgraph=False, savefig=False):
     gas_name = 'broadband_gasConcs_' + str(cid)  ## broadband_gasConcs_176
     cal_name = 'broadband_eCompoundOutputs_'+ str(cid) +'_calibration' ## broadband_eCompoundOutputs_176_calibration
 
@@ -215,9 +215,10 @@ if __name__ == "__main__":
     # date = '20230209t3test'
     # row1 = 1200
 
-    gas = '6574 - 1,1,2-Trichloroethane'
-    date = '20231026t2'
+    gas = '9253 - Cyclopentane'
+    date = '20231011t1'
     row1 = 30
+
 
     fnr = os.path.join(basepath, gas, date)
     print(fnr)
