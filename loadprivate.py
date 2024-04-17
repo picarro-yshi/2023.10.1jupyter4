@@ -10,9 +10,11 @@ def loadprivate(fnr, verbose=True):  # from Chris's datautility3
     ht = []  # head tags
     dat = None
     fd = os.path.join(fnr, 'PrivateData', 'broadband')
-    N = len(os.listdir(fd))
+    lst = os.listdir(fd)
+    lst.sort()
+    N = len(lst)
     ct = 1
-    for f in os.listdir(fd):
+    for f in lst:
         ext = f[-3:]
         fn = os.path.join(fd, f)
         if ext == 'dat':

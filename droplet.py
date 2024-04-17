@@ -41,6 +41,10 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     # calculate baseline before level
     idx = (x1 > epo1) & (x1 < epo1 + 1500)  # 25min baseline
     baseline = y1[idx]
+    print("epo1", epo1)
+    # for ii in range(len(x1)):
+    #     print(x1[ii])
+    # exit()
     zero1 = np.mean(baseline)
     std1 = np.std(baseline)
     print('zero1, std1:', zero1, std1)
@@ -134,8 +138,9 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
         xmak = xmak[::2]
 
     # add start time
-    x_t.insert(0, int(x[0]))
-    xmak.insert(0, time.strftime('%H:%M', time.localtime(x[0])))
+    if x[0] - x_t[0] > 600:
+        x_t.insert(0, int(x[0]))
+        xmak.insert(0, time.strftime('%H:%M', time.localtime(x[0])))
 
     # add end time
     tag = 1  # attach to end
@@ -178,7 +183,6 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     tag = 1  # attach to end
     gap = x_t2[-1] - x_t2[-2]
     if len(xmak2) > 10 and x[-1] - x_t2[-1] < gap/2:
-        print('tag =0 ')
         tag = 0  # attach as the end
 
     if tag:
@@ -361,8 +365,8 @@ if __name__ == "__main__":
     date = '20230908test'
     row1 = 1200
 
-    # sample = '8864 - 1,3-Diethylbenzene'
-    # date = '20240105'
+    sample = '6517 - Ethyl silicate'
+    date = '20240416y'
     # date = '20231229'
 
     fnr = os.path.join(basepath, sample, date)
