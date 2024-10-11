@@ -1,27 +1,81 @@
-## calibration factor for droplet experiment, adapted from jupyter notebook
+## calibration factor for droplet experiment, private data only
 import os
 import time
-import platform
 import numpy as np
 import h5py  # need by Windows
 import tables  # need by windows
 import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "Arial"
 
-from spectral_logger1 import SpectralLogReader as slog
-from loadprivate import loadprivate
-
 BASELINE_TIME = 40*60  # s, baseline time
 
 
-## all parameters must be valid before sending to below functions; no sanity check
-## need .h5 files in PrvateData/broadband and ComboResults folder
-def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, showgraph=False, savefig=False):
-    gas_name = 'broadband_gasConcs_' + str(cid)
-    cal_name = 'broadband_eCompoundOutputs_'+ str(cid) +'_calibration'
-    date = t1[:8]
+def loadprivate(private_data_path, verbose=True):  # from Chris's datautility3
+    ht = []  # head tags
+    dat = None
+    lst = os.listdir(private_data_path)
+    lst.sort()
+    N = len(lst)
+    ct = 1
+    for f in lst:
+        ext = f[-3:]
+        fn = os.path.join(private_data_path, f)
+        if ext == 'dat':
+            fob = open(fn, 'r')
+            header = fob.readline(-1)
+            ht = string.split(string.strip(header, ' '))
+            mydata = []
+            stdlen = -1
+            for lines in fob:
+                data = string.split(string.strip(lines, ' '))
+                row = []
+                try:
+                    for k in range(len(ht)):
+                        try:
+                            row.append(float(data[k]))
+                        except:
+                            row.append(-1.0)
+                    if stdlen == -1:
+                        stdlen = len(data)
+                    if len(data) == stdlen:
+                        mydata.append(row)
+                except:
+                    if verbose: print('!', end=' ')
+            fob.close()
 
-    # t2 format: 202312110941
+        elif ext == '.h5':
+            fob5 = tables.open_file(fn)
+            D = [g for g in fob5.root]
+            if ht == []:
+                ht = D[0].colnames
+
+            for tag in ht:
+                if tag == ht[0]:
+                    datarray = np.array([D[0].col(tag)])
+                else:
+                    datarray = np.vstack((datarray, D[0].col(tag)))
+
+            mydata = np.transpose(datarray)
+            fob5.close()
+
+        try:
+            if dat is None:
+                dat = mydata
+            else:
+                dat = np.vstack((dat, mydata))
+        except:
+            print('dat array dimension changed in file %s. Try cut the first ten minutes and re-run.' % f)
+
+        if verbose:
+            print("Loading %d / %d... " % (ct, N))
+        ct += 1
+
+    return ht, dat
+
+## all parameters must be valid before sending to below functions; no sanity check
+## need .h5 files in PrvateData folder
+def calibration_droplet(fnr, gas, weight, MW, t1, t2, t3, pct=4, showgraph=False, savefig=False):
+    date = t1[:8]
     epo2 = int(time.mktime(time.strptime(t2, "%Y%m%d%H%M")))
     # get start time of usable data
     epo1 = epo2 - 1800  # 30 min baseline before add sample
@@ -30,21 +84,20 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     def h(name):
         j = ht.index(name)  # finds the index of the list ht that corresponds to 'name'
         return dat[:, j]
-    ht, dat = loadprivate(fnr)
+    ht, dat = loadprivate(private_data_path)
 
     # raw data
     x1 = h('time')
-    y1 = h(gas_name) * 1e6
-    MFC11 = h('MFC1_flow')*1000.0
-    MFC21 = h('MFC2_flow')
+    y1 = h(GAS_KEY) # concentration unit is ppb
+    MFC11 = h('MFC1_flow')*1000.0  # sccm
+    MFC21 = h('MFC2_flow')  # sccm
 
     # calculate baseline before level
     idx = (x1 > epo1) & (x1 < epo1 + 1500)  # 25min baseline
     baseline = y1[idx]
     print("epo1", epo1)
-    # for ii in range(len(x1)):
-    #     print(x1[ii])
     # exit()
+
     zero1 = np.mean(baseline)
     std1 = np.std(baseline)
     print('zero1, std1:', zero1, std1)
@@ -76,7 +129,7 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     # truncate to get usable data
     idx = (x1 > epo1) & (x1 < epo3)
     x = x1[idx]  # epoch time
-    y = y1[idx] - zero1  # concentration
+    y = y1[idx] - zero1  # concentration, ppb
     MFC1 = MFC11[idx]
     MFC2 = MFC21[idx]
 
@@ -85,25 +138,23 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     s = 0
     S = [0]
     for j in range(len(y)-1):
-        flow_tot = MFC1[j] + MFC2[j]  # sccm
-        mflow_tot = flow_tot / 24455  # 22400 #mol/min #24466
+        flow_tot = MFC1[j] + MFC2[j]  # sccm, cm3/min
+        mflow_tot = flow_tot / 24455  # mol/min
         dt = x0[j + 1] - x0[j]
-        dY = 0.5 * (y[j + 1] + y[j])
-        moles = dY * mflow_tot * dt
-        s += moles    # micro moles
+        dY = 0.5 * (y[j + 1] + y[j])  # ppb
+        moles = dY * mflow_tot * dt # mole, ppb
+        s += moles    # *1e-9 moles
         S.append(s)
-    # print(S[-1])
 
-    set_cal = h(cal_name)[0]  # all value same
     print('cal value in the library')
-    print(set_cal*1e6)
+    print(library_value)
 
-    vol_in = float(weight) / float(MW)
-    vol_ratio = vol_in / (S[-1]) * 1E6
+    vol_in = float(weight / MW)  # mole
+    vol_ratio = vol_in / ((S[-1]) * 1e-9)
     print('ratio')
     print(vol_ratio)
 
-    cal = vol_ratio * set_cal * 1e6
+    cal = vol_ratio * library_value
     print('calibration factor')
     print(cal)  # this is!
 
@@ -240,7 +291,7 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     A1.set_title('Droplet Calibration: cal = %.3f\n%s' %(cal, gas), fontsize=16)
     A1.set_xticklabels([])
     A1.legend(loc='best', fontsize=10)
-    A1.set_ylabel('Sample (ppm)', fontsize=12)
+    A1.set_ylabel('Sample (ppb)', fontsize=12)
 
     # top axis for min
     ax2 = A1.twiny()
@@ -253,7 +304,7 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     A2.plot(x, S, c='#4188BA', lw=1, label=('Integrated, total: %.2f' % S[-1]))
     A2.legend(loc='best', fontsize=10)
     A2.set_xlabel('Clock time', fontsize=12)
-    A2.set_ylabel('Sample (µ moles)', fontsize=12)
+    A2.set_ylabel('Sample (1e-9 moles)', fontsize=12)  # µ
 
     A2.set_xticks(x_t, xmak, fontsize=10, rotation=40, ha='right')
     A2.tick_params(pad=0)
@@ -271,18 +322,12 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     A.set_facecolor('#Ededee')
     A.grid(c='white')
 
-    A.plot(x, y, label=' %s (ppm)' % gas)
-    A.set_ylabel('Conc. (ppm)', fontsize=12)
+    A.plot(x, y, label=' %s (ppb)' % gas)
+    A.set_ylabel('Conc. (ppb)', fontsize=12)
     A.set_xlabel('Clock time', fontsize=12)
     A.set_title('%s Raw Data\n%s'%(date, gas))
     A.set_xticks(x_t, xmak, fontsize=10, rotation=40, ha='right')
     A.tick_params(pad=0)
-
-    # Shrink current axis's height by 20% on the bottom
-    # box = A.get_position()
-    # A.set_position(
-    #     [box.x0, box.y0 + box.height * 0.05, box.width, box.height * 0.9]
-    # )
 
     ax2 = A.twiny()
     ax2.set_xticks(x_t2, xmak2, fontsize=8)
@@ -301,43 +346,6 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
     # plt.show()
     # exit()
 
-    #4 Combo plot: check if compound has the correct spectrum and RMSE
-    read = slog(os.path.join(fnr, 'ComboResults'), verbose=True)
-    data, _, max_row = read.get_spectra_row('broadband', row, pull_results=True)
-    nu = data['nu']
-    k = data['absorbance']
-    residuals = data['residuals']
-    partial_fit = data['partial_fit']
-    model = data['model']
-
-    F, [A1, A2] = plt.subplots(2, 1, dpi=150)   #figsize=(10, 8)
-    A1.set_facecolor('#Ededee')
-    A2.set_facecolor('#Ededee')
-    A1.grid(c='white', which='major',lw=1)
-    A1.grid(c='white', which='minor', lw=0.5)
-    A2.grid(c='white', which='major',lw=1)
-    A2.grid(c='white', which='minor', lw=0.5)
-    A1.minorticks_on()
-    A2.minorticks_on()
-
-    A1.plot(nu, k, label='data', color='#DC61D0', lw=1) #, alpha=0.75)
-    A1.plot(nu, model, label='model', color='#00ffff', lw=1) #, alpha=0.4)
-    A1.legend(loc=0, fontsize=10)
-    A1.set_ylabel('Absorbance', fontsize=12)
-    A1.set_title('%s Combo Log\n%s'%(date, gas))
-
-    A2.plot(nu, residuals, label='residuals', color='#7068bb', lw=1)  #, alpha=0.75
-    A2.set_ylabel('Residuals', color='#7068bb', fontsize=12)
-    A4 = A2.twinx()
-    A4.plot(nu, partial_fit, label='partial fit', color='#A6ce6a', lw=1)  #, alpha=0.75)
-    A2.set_xlabel('nu (cm-1)', fontsize=12)
-    A4.set_ylabel('Partial fit', color='#A6ce6a', fontsize=12)
-    A2.legend(loc=0, fontsize=10)
-    F4 = F
-    if savefig:
-        plt.savefig(os.path.join(fnr, date + ' RawSpectraFit.png'), bbox_inches='tight')
-    plt.show(block=False)
-
     def close_figure(event):
         plt.close('all')
 
@@ -348,59 +356,53 @@ def calibration_droplet(fnr, gas, cid, weight, MW, t1, t2, t3, row=100, pct=4, s
         # press q to close figures 1 by 1
         plt.show()
 
-    return F1, F2, F3, F4, max_row
+    return F1, F2, F3
 
 
 if __name__ == "__main__":
-    if platform.system() == "Linux":
-        basepath = r'/mnt/r/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration/'
-    elif platform.system() == "Windows":
-        basepath = 'R:/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration'
-    else:
-        basepath = '/Volumes/Data/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration'
+    # custom input
+    SOLUTION_WEIGHT_RATIO = 0.48
+    GAS_KEY = "hbr_ppb_raw"  # ppb
+    library_value = 3.835
+    fnr = "/Volumes/Data/crd_G2000/WADS/WADS2001/Data/2021008_WeightedDroplet/HBrDroplet1"
+    private_data_path = os.path.join(fnr, "private/unpacked")
+    cid = 260
+    sample = '260 - HBr in water, w/w = 48%'
+    pct = 4  # zero 2 < zero1 + pct*sigma, end experiment
 
-    # pct = 4  # zero 2 < zero1 + pct*sigma, end experiment
-    # sample = '7219 - Indene'
-    sample = '9233 - Norbornane'
-    date = '20230908test'
-    row1 = 1200
+    t1 = "202410081100"  # start time yyyymmddhhmm
+    t2 = "202410081158"  # add sample
+    t3 = "202410090830"  # end
 
-    fnr = os.path.join(basepath, sample, date)
-    print(fnr)
+    weight_raw = 0.01494  # g
+    weight = weight_raw * SOLUTION_WEIGHT_RATIO
+    MW = 80.91  # molecular weight
+
+    # save parameters
     fnrp = os.path.join(fnr, 'par')
+    if not os.path.exists(fnrp):
+        os.mkdir(fnrp)
+    with open(os.path.join(fnrp, 'molecular_weight.txt'), 'w') as f:
+        f.write(str(MW))
+    with open(os.path.join(fnrp, 'weight.txt'), 'w') as f:
+        f.write(str(weight_raw))
+    with open(os.path.join(fnrp, 'sample.txt'), 'w') as f:
+        f.write(sample)
+    with open(os.path.join(fnrp, 'cid.txt'), 'w') as f:
+        f.write(str(cid))
+    with open(os.path.join(fnrp, 't1.txt'), 'w') as f:
+        f.write("%s\n%s\n%s" % (t1[:8], t1[8:10], t1[10:]))
+    with open(os.path.join(fnrp, 't2.txt'), 'w') as f:
+        f.write("%s\n%s\n%s" % (t2[:8], t2[8:10], t2[10:]))
+    with open(os.path.join(fnrp, 't3.txt'), 'w') as f:
+        f.write("%s\n%s\n%s" % (t3[:8], t3[8:10], t3[10:]))
 
     if not os.path.exists(fnr):
         print('Error, did not find data. Please check if data exist or attach the data/R drive.')
-    elif not os.path.exists(fnrp):
-        print('Error, did not find experiment parameters.')
     else:
-        f = open(os.path.join(fnrp, 't1.txt'), 'r')
-        temp = f.read().splitlines()
-        t1 = temp[0] + temp[1] + temp[2]
+        # calibration_droplet(fnr, sample, weight, MW, t1, t2, t3, pct, showgraph=True)
+        calibration_droplet(fnr, sample, weight, MW, t1, t2, t3, pct, showgraph=True, savefig=True)
 
-        f = open(os.path.join(fnrp, 't2.txt'), 'r')
-        temp = f.read().splitlines()
-        t2 = temp[0] + temp[1] + temp[2]
 
-        f = open(os.path.join(fnrp, 't3.txt'), 'r')
-        temp = f.read().splitlines()
-        t3 = temp[0] + temp[1] + temp[2]
-        print(t1, t2, t3)
 
-        f = open(os.path.join(fnrp, 'cid.txt'), 'r')
-        temp = f.read().splitlines()
-        cid = int(temp[0])
-
-        f = open(os.path.join(fnrp, 'weight.txt'), 'r')
-        temp = f.read().splitlines()
-        weight = temp[0]
-        f = open(os.path.join(fnrp, 'molecular_weight.txt'), 'r')
-        temp = f.read().splitlines()
-        MW = temp[0]
-
-        # F1, F2, F3, F4, max_row = calibration_droplet(fnr, sample, cid, weight, MW, t1, t2, t3, showgraph=True)
-        # print(max_row)
-
-        calibration_droplet(fnr, sample, cid, weight, MW, t1, t2, t3, row1, showgraph=True)
-        # calibration_droplet(fnr, sample, cid, weight, MW, t1, t2, t3, row1, showgraph=True, savefig=True)
-
+# last updated: 2024.10.9, by Yilin Shi

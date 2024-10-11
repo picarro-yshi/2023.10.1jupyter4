@@ -72,15 +72,13 @@ def loadprivate(fnr, verbose=True):  # from Chris's datautility3
 
 if __name__ == "__main__":
     rdrive = '/Volumes/Data/crd_G9000/AVXxx/3610-NUV1022/R&D/Calibration'
-    compound = '638186 - trans-1,2-Dichloroethylene'
-    compound = '6574 - 1,1,2-Trichloroethane'
-    date = '20230815'
-    date = '20231103'
+    compound = '31289 - Nonanal'
+    date = '20240814'
     fnr = os.path.join(rdrive, compound, date)
 
     ht, dat = loadprivate(fnr)
     print(ht)  # head tag
-    # print(dat)  # head tag
+    # print(dat)
 
 # ## import customized files from other folder
 # helperpath = '../code/Rella-Python/'    ## './' in same folder
